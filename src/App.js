@@ -1,30 +1,163 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import Post from "./post/Post";
+import { db, auth } from "./Firebase";
+import Modal from "@material-ui/core/Modal";
+import { makeStyles } from "@material-ui/core/styles";
+import { Button } from "@material-ui/core";
+import { Input } from "@material-ui/core";
+import ImageUpload from "./upload/ImageUpload";
+
+function rand() {
+  return Math.round(Math.random() * 20) - 10;
+}
+function getModalStyle() {
+  const top = 50;
+  const left = 50;
+
+  return {
+    top: `${top}%`,
+    left: `${left}%`,
+    transform: `translate(-${top}%, -${left}%)`,
+  };
+}
+
+const useStyles = makeStyles((theme) => ({
+  paper: {
+    position: "absolute",
+    width: 400,
+    backgroundColor: theme.palette.background.paper,
+    border: "2px solid #000",
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 4, 3),
+  },
+}));
 
 function App() {
-  const [posts, setPosts] = useState([
-    {
-      ImageUrl:
-        "https://scontent.fcmb4-1.fna.fbcdn.net/v/t31.0-8/s960x960/22137049_1800196716937367_3822949587228347143_o.jpg?_nc_cat=109&_nc_sid=05277f&_nc_ohc=npe8kzYNAvoAX9adfFn&_nc_ht=scontent.fcmb4-1.fna&_nc_tp=7&oh=f3ec7d3480bc11241224ea6ee8f7e1cc&oe=5F5A7AA8",
-      userName: "cat95",
-      caption: "cats are always pretty 🍀🍀",
-    },
-    {
-      ImageUrl:
-        "https://scontent.fcmb4-1.fna.fbcdn.net/v/t1.0-9/20770322_1784022531888119_1135927188321928001_n.jpg?_nc_cat=102&_nc_sid=05277f&_nc_ohc=WvVzJX88r-sAX-leUjW&_nc_ht=scontent.fcmb4-1.fna&oh=07593b5ab3b14a89a8b0efc3f719a17e&oe=5F5B44DE",
-      userName: "haran95",
-      caption: "Musical instruments are  always touch my heart🍀",
-    },
-    {
-      ImageUrl:
-        "https://scontent.fcmb4-1.fna.fbcdn.net/v/t1.0-9/47326142_2034983486792021_3772129562574454784_n.jpg?_nc_cat=108&_nc_sid=05277f&_nc_ohc=RCsRDqY2mmwAX-NX23a&_nc_ht=scontent.fcmb4-1.fna&oh=7f3917b4c277977fe3f4e36ac0c13062&oe=5F5B57D6",
-      userName: "nature#004",
-      caption: "Society will try to protect our nature🌴🌴",
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [openSignIn, setOpenSignIn] = useState("");
+  const classes = useStyles();
+  const [userName, setUserName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [modalStyle] = useState(getModalStyle);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    db.collection("posts")
+      .orderBy("timestamp", "desc")
+      .onSnapshot((snapshot) => {
+        setPosts(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            post: doc.data(),
+          }))
+        );
+      });
+  }, []);
+  useEffect(() => {
+    const unSubscribe = auth.onAuthStateChanged((authUser) => {
+      if (authUser) {
+        setUser(authUser);
+        console.log(authUser);
+      } else {
+        setUser(null);
+      }
+    });
+    return () => {
+      unSubscribe();
+    };
+  }, [user, userName]);
+  const signUp = (e) => {
+    e.preventDefault();
+    auth
+      .createUserWithEmailAndPassword(email, password)
+      .then((authUser) => {
+        // console.log(authUser);
+        return authUser.user.updateProfile({
+          displayName: userName,
+        });
+        alert("Sucessfully created");
+      })
+      .catch((err) => {
+        alert(err.message);
+      });
+
+    setOpen(false);
+  };
+
+  const signIn = (e) => {
+    e.preventDefault();
+    auth.signInWithEmailAndPassword(email, password).catch((err) => {
+      console.log(err);
+    });
+    setOpenSignIn(false);
+  };
   return (
     <div className="app">
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <div style={modalStyle} className={classes.paper}>
+          <form className="app__signup">
+            <center>
+              <img
+                src={
+                  "https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
+                }
+                alt="headerImage"
+                className="app__headerImage"
+              />
+            </center>
+            <Input
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="UserName"
+            />
+            <Input
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email"
+            />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="password"
+            />
+            <Button onClick={(e) => signUp(e)}>Sign up</Button>
+          </form>
+        </div>
+      </Modal>
+      <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
+        <div style={modalStyle} className={classes.paper}>
+          <form className="app__sigin">
+            <center>
+              <img
+                src={
+                  "https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
+                }
+                alt="headerImage"
+                className="app__headerImage"
+              />
+            </center>
+
+            <Input
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email"
+            />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="password"
+            />
+            <Button onClick={(e) => signIn(e)}>Sign in</Button>
+          </form>
+        </div>
+      </Modal>
       <div className="app__header">
         <img
           src={
@@ -33,15 +166,37 @@ function App() {
           alt="headerImage"
           className="app__headerImage"
         />
+        {user ? (
+          <Button type="submit" onClick={() => auth.signOut()}>
+            LogOut
+          </Button>
+        ) : (
+          <div>
+            <Button type="submit" onClick={() => setOpen(true)}>
+              sign Up
+            </Button>
+            <Button type="submit" onClick={() => setOpenSignIn(true)}>
+              sign In
+            </Button>
+          </div>
+        )}
       </div>
-      {posts.map((data) => (
-        <Post
-          key={data.ImageUrl}
-          ImageUrl={data.ImageUrl}
-          caption={data.caption}
-          userName={data.userName}
-        />
-      ))}
+      <div className="app__posts">
+        {posts.map(({ id, post }) => (
+          <Post
+            key={post.ImageUrl}
+            ImageUrl={post.ImageUrl}
+            caption={post.caption}
+            userName={post.userName}
+          />
+        ))}
+      </div>
+
+      {user?.displayName ? (
+        <ImageUpload userName={user.displayName} />
+      ) : (
+        <h3>Please Sign In</h3>
+      )}
     </div>
   );
 }

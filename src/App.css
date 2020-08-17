@@ -11,4 +11,22 @@
   object-fit: contain;
   padding: 15px;
   border-bottom: 1px solid lightgray;
+  display: flex;
+  justify-content: space-between;
+}
+
+.app__headerImage {
+  object-fit: contain;
+}
+.app__signup,
+.app__sigin {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+.app__posts {
+  padding: 20px;
+  /* display: flex;
+  flex-direction: column;
+  align-items: center; */
 }
