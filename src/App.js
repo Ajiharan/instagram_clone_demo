@@ -7,6 +7,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { Button } from "@material-ui/core";
 import { Input } from "@material-ui/core";
 import ImageUpload from "./upload/ImageUpload";
+import InstagrmEmbed from "react-instagram-embed";
 
 function rand() {
   return Math.round(Math.random() * 20) - 10;
@@ -182,14 +183,33 @@ function App() {
         )}
       </div>
       <div className="app__posts">
-        {posts.map(({ id, post }) => (
-          <Post
-            key={post.ImageUrl}
-            ImageUrl={post.ImageUrl}
-            caption={post.caption}
-            userName={post.userName}
+        <div className="app__postsleft">
+          {posts.map(({ id, post }) => (
+            <Post
+              key={id}
+              postId={id}
+              ImageUrl={post.ImageUrl}
+              caption={post.caption}
+              userName={post.userName}
+              Signuser={user}
+            />
+          ))}
+        </div>
+
+        <div className="app__postsRight">
+          <InstagrmEmbed
+            url="https://www.instagram.com/p/CBmxTrWheT9/"
+            maxWidth={320}
+            hideCaption={false}
+            containerTagName="div"
+            protocol=""
+            injectScript
+            onLoading={() => {}}
+            onSuccess={() => {}}
+            onAfterRender={() => {}}
+            onFailure={() => {}}
           />
-        ))}
+        </div>
       </div>
 
       {user?.displayName ? (
